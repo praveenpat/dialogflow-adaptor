@@ -1,5 +1,7 @@
 package com.adaptors.dialogflow.dialogflowadaptor;
 
+import java.util.Map;
+
 public class UserRequest {
 	
 	private String sessionId;
@@ -8,7 +10,17 @@ public class UserRequest {
 	
 	private String languageCode;
 	
+	Map<String,String> channelAttributes;
 	
+	
+	public Map<String, String> getChannelAttributes() {
+		return channelAttributes;
+	}
+
+	public void setChannelAttributes(Map<String, String> channelAttributes) {
+		this.channelAttributes = channelAttributes;
+	}
+
 	public UserRequest() {
 		super();
 		

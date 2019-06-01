@@ -14,6 +14,8 @@ import com.dialogflow.services.ConfigException;
 import com.dialogflow.services.DialogflowConfig;
 import com.dialogflow.services.DialogflowService;
 import com.dialogflow.services.KnowledgeResponse;
+import com.dialogflow.services.NLUAdaptorException;
+import com.dialogflow.services.RoutingResponse;
 import com.dialogflow.services.DialogflowConfig.AgentConfig;
 
 @RestController
@@ -35,32 +37,32 @@ public class DialogflowController {
 		
 	}
 	
+	/**
+	 * Use this API if you intend to use single agent with default agent configuration
+	 * @param userRequest
+	 * @return
+	 */
+	
 	@PostMapping("/userQuery")
 	public BotResponse handleUserQuery(@RequestBody UserRequest userRequest) {
 		
 		log.info("Recieved user request with session-id : {} and queryText : {} ", userRequest.getSessionId(),userRequest.getUserQuery());
+		
+		if(config.getDefaultAgent()==null) {
+			throw new ConfigException("Default agent configuration not found");
+		}
+		
 		try {
 			return dialogflowService.detectIntentText(userRequest,config.getDefaultAgent());
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return new BotResponse(userRequest.getSessionId(),"Something went wrong!");
+			
+			log.error("Encountered exception :",e);
+			throw  new NLUAdaptorException(userRequest.getSessionId() +" : " +e.getMessage() );
 		}
 	}
 	
 	
-	@PostMapping("/knowledgeQuery")
-	public KnowledgeResponse handleknowledgeQuery(@RequestBody UserRequest userRequest) {
-		
-		log.info("Recieved user request with session-id : {} and queryText : {} ", userRequest.getSessionId(),userRequest.getUserQuery());
-		try {
-			return dialogflowService.detectIntentKnowledge(userRequest);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return new KnowledgeResponse(userRequest.getSessionId(),"Something went wrong!");
-		}
-	}
+	
 	
 	
 
@@ -68,44 +70,58 @@ public class DialogflowController {
 	public BotResponse handleUserQueryByAgent(@PathVariable String agentName, @RequestBody UserRequest userRequest) {
 		
 		log.info("Recieved user request for agent {}  with session-id : {} and queryText : {} ", agentName,userRequest.getSessionId(),userRequest.getUserQuery());
-		try {
+		
+		
+		AgentConfig agentConfig=null;
+		
+		if(!CollectionUtils.isEmpty(config.getAgents())) {
 			
+			agentConfig=config.getAgents().stream().filter(c-> c.getAgentName().equalsIgnoreCase(agentName)).findAny().orElse(null);
 			
-			
-			if(!CollectionUtils.isEmpty(config.getAgents())) {
-				
-				AgentConfig agentConfig=config.getAgents().stream().filter(c-> c.getAgentName().equalsIgnoreCase(agentName)).findAny().orElse(null);
-				
-				if(agentConfig!=null) {
-					
-					return dialogflowService.detectIntentText(userRequest,agentConfig); 
-				}else {
-					
-					throw new ConfigException("No Configuration for agent with name "+agentName + " found");
-				}
-				
-				
-			}else {
+			if(agentConfig==null) {
 				
 				throw new ConfigException("No Configuration for agent with name "+agentName + " found");
 			}
-			
-			
-			
+		}
+		
+		try {
+					return dialogflowService.detectIntentText(userRequest,agentConfig); 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			if(e instanceof ConfigException) {
-				throw (ConfigException)e;
-			}
 			
-			e.printStackTrace();
+			log.error("Encountered exception :",e);
 			
-			return new BotResponse(userRequest.getSessionId(),"Something went wrong!");
+			throw  new NLUAdaptorException(userRequest.getSessionId() +" : " +e.getMessage() );
 		}
 		
 		
 		
 	}
+	
+	
+	
+	@PostMapping("/routing")
+	public RoutingResponse handleRoutingRequest(@RequestBody UserRequest userRequest) {
+		
+		log.info("Recieved user request with session-id : {} and queryText : {} ", userRequest.getSessionId(),userRequest.getUserQuery());
+		
+		if(config.getRoutingAgent()==null) {
+			throw new ConfigException("Routing agent configuration not found");
+		}
+		
+		try {
+			
+			
+			return RoutingResponse.mapToRoutingResponse( dialogflowService.detectIntentText(userRequest,config.getDefaultAgent()));
+			
+			
+			
+		} catch (Exception e) {
+			
+			log.error("Encountered exception :",e);
+			throw  new NLUAdaptorException(userRequest.getSessionId() +" : " +e.getMessage() );
+		}
+	}
+	
 	
 	
 }

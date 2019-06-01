@@ -8,14 +8,21 @@ import java.util.Map;
 import org.springframework.util.CollectionUtils;
 
 import com.dialogflow.services.KnowledgeAnswers;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 
 
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BotResponse {
 	
 	private String sessionId;
+	
+	private String userQuery;
+	
 	private String fullfillmentText;
+	
+	private List<String> fullfillmentMessages;
+	
 	
 	private Map<String,Object> entities;
 	
@@ -28,9 +35,88 @@ public class BotResponse {
 
 	private List<KnowledgeAnswers> knowledgeAnswers;
 	
+	private Number sentimentScore;
+	
+	private boolean endInteraction;
+	
+	private boolean apiTimeoutFallback;
+	
+	
+	public List<String> getFullfillmentMessages() {
+		return fullfillmentMessages;
+	}
+
+
+
+	public void setFullfillmentMessages(List<String> fullfillmentMessages) {
+		this.fullfillmentMessages = fullfillmentMessages;
+	}
+	
+	public void addFullfillmentMessage(String message) {
+		
+		if(CollectionUtils.isEmpty(this.fullfillmentMessages)) {
+			this.fullfillmentMessages=new ArrayList<>();
+		}
+		
+		this.fullfillmentMessages.add(message);
+	}
 	
 	
 	
+	public boolean isApiTimeoutFallback() {
+		return apiTimeoutFallback;
+	}
+
+
+
+	public void setApiTimeoutFallback(boolean apiTimeoutFallback) {
+		this.apiTimeoutFallback = apiTimeoutFallback;
+	}
+
+
+
+	public boolean isEndInteraction() {
+		return endInteraction;
+	}
+
+
+
+	public void setEndInteraction(boolean endInteraction) {
+		this.endInteraction = endInteraction;
+	}
+
+
+
+	public void setCustomPayloads(List<Map<String, Object>> customPayloads) {
+		this.customPayloads = customPayloads;
+	}
+
+
+
+	public String getUserQuery() {
+		return userQuery;
+	}
+
+
+
+	public void setUserQuery(String userQuery) {
+		this.userQuery = userQuery;
+	}
+
+
+
+	public Number getSentimentScore() {
+		return sentimentScore;
+	}
+
+
+
+	public void setSentimentScore(Number sentimentScore) {
+		this.sentimentScore = sentimentScore;
+	}
+
+
+
 	public List<Map<String, Object>> getCustomPayloads() {
 		return customPayloads;
 	}
